@@ -44,13 +44,20 @@ export async function collectSnapshots(
   const jobs = targets.flatMap((site) => strategies.map((strategy) => ({ site, strategy })));
 
   return mapWithConcurrency(jobs, env.COLLECT_CONCURRENCY, async ({ site, strategy }) => {
+    const result = { siteId: site.id, url: site.url, strategy };
+    let snapshot;
     try {
-      const snapshot = await runPageSpeed(site.url, strategy, { apiKey: env.PSI_API_KEY });
-      db.insert(schema.snapshots).values({ ...snapshot, siteId: site.id }).run();
-      return { siteId: site.id, url: site.url, strategy, ok: true };
+      snapshot = await runPageSpeed(site.url, strategy, { apiKey: env.PSI_API_KEY });
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return { siteId: site.id, url: site.url, strategy, ok: false, error: message };
+      return { ...result, ok: false, error: error instanceof Error ? error.message : String(error) };
     }
+    try {
+      db.insert(schema.snapshots).values({ ...snapshot, siteId: site.id }).run();
+    } catch (error) {
+      // Most likely the site was removed while its PSI request was in flight.
+      const detail = error instanceof Error ? error.message : String(error);
+      return { ...result, ok: false, error: `Could not save snapshot: ${detail}` };
+    }
+    return { ...result, ok: true };
   });
 }

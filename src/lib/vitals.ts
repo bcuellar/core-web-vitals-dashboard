@@ -87,8 +87,12 @@ export type CwvAssessment = "passed" | "failed" | "no-data";
 
 /**
  * Mirrors the PageSpeed Insights "Core Web Vitals Assessment": passes when the
- * 75th percentile of LCP, INP and CLS are all "good". INP is optional because
- * low-traffic pages may not report it.
+ * 75th percentile of LCP, INP and CLS are all "good".
+ *
+ * - LCP and CLS are required; if either is missing the result is `"no-data"`
+ *   (never `"failed"`).
+ * - INP is optional because low-traffic pages may not report it; when missing
+ *   the assessment is based on LCP and CLS alone.
  */
 export function assessCoreWebVitals(
   snapshot: Pick<Snapshot, "fieldLcp" | "fieldInp" | "fieldCls"> | null | undefined,

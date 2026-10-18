@@ -9,6 +9,7 @@ import { AssessmentBadge, Card, CardHeader, EmptyState, MetricValue, RegressionI
 import type { Snapshot } from "@/db/schema";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { DEFAULT_BASELINE_WINDOW } from "@/lib/regressions";
+import { parseSiteId } from "@/lib/sites";
 import { parseStrategy } from "@/lib/strategy";
 import { METRICS, type MetricKey } from "@/lib/vitals";
 import { getSiteOverview } from "@/server/queries";
@@ -49,8 +50,8 @@ export default function SitePage({ params, searchParams }: PageProps<"/sites/[id
 }
 
 async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
-  const id = Number((await params).id);
-  if (!Number.isInteger(id)) notFound();
+  const id = parseSiteId((await params).id);
+  if (id === null) notFound();
   const strategy = parseStrategy((await searchParams).strategy);
   const overview = await getSiteOverview(id, strategy);
   if (!overview) notFound();

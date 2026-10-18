@@ -93,5 +93,5 @@ export function detectRegressions(
     });
   }
 
-  return regressions;
+  return regressions.sort(compareRegressions);
 }

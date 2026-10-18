@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getEnv } from "@/lib/env";
+import { parseSiteId } from "@/lib/sites";
 import { collectSnapshots } from "@/server/collect";
 
 const AUTH_SCHEME = "Bearer";
@@ -26,9 +27,9 @@ export async function POST(request: Request) {
   }
 
   const siteIdParam = new URL(request.url).searchParams.get("siteId");
-  const siteId = siteIdParam === null ? undefined : Number(siteIdParam);
-  if (siteId !== undefined && !Number.isInteger(siteId)) {
-    return Response.json({ error: "siteId must be an integer" }, { status: 400 });
+  const siteId = siteIdParam === null ? undefined : parseSiteId(siteIdParam);
+  if (siteId === null) {
+    return Response.json({ error: "siteId must be a positive integer" }, { status: 400 });
   }
 
   const results = await collectSnapshots({ siteId });

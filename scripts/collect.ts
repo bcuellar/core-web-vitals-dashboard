@@ -8,6 +8,7 @@
 import "./load-env";
 import { parseArgs } from "node:util";
 import { STRATEGIES, type Strategy } from "@/db/schema";
+import { parseSiteId } from "@/lib/sites";
 import { collectSnapshots } from "@/server/collect";
 
 async function main() {
@@ -19,8 +20,8 @@ async function main() {
   if (strategy && !STRATEGIES.includes(strategy)) {
     throw new Error(`--strategy must be one of: ${STRATEGIES.join(", ")}`);
   }
-  const siteId = values.site ? Number(values.site) : undefined;
-  if (siteId !== undefined && !Number.isInteger(siteId)) throw new Error("--site must be a numeric site id");
+  const siteId = values.site === undefined ? undefined : parseSiteId(values.site);
+  if (siteId === null) throw new Error("--site must be a positive integer site id");
 
   const results = await collectSnapshots({ siteId, strategies: strategy ? [strategy] : undefined });
   if (results.length === 0) console.log("No sites to collect. Add one in the UI or run `npm run db:seed`.");
