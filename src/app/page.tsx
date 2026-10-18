@@ -37,7 +37,9 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/">, "searchParams">)
 
   const withData = overviews.filter((o) => o.assessment !== "no-data");
   const passing = withData.filter((o) => o.assessment === "passed").length;
-  const regressions = overviews.flatMap((o) => o.regressions.map((r) => ({ ...r, site: o.site })));
+  const regressions = overviews
+    .flatMap((o) => o.regressions.map((r) => ({ ...r, site: o.site })))
+    .sort(compareRegressions);
   const highSeverity = regressions.filter((r) => r.severity === "high").length;
   const lastCollected = overviews
     .map((o) => o.latest?.fetchedAt)
@@ -89,22 +91,20 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/">, "searchParams">)
           </EmptyState>
         ) : (
           <div className="divide-y divide-slate-100 px-5">
-            {regressions
-              .sort(compareRegressions)
-              .map((r) => (
-                <RegressionItem
-                  key={`${r.site.id}-${r.metric}`}
-                  regression={r}
-                  siteLabel={
-                    <Link
-                      href={withStrategy(`/sites/${r.site.id}`, strategy)}
-                      className="text-indigo-600 hover:text-indigo-500"
-                    >
-                      {r.site.name}
-                    </Link>
-                  }
-                />
-              ))}
+            {regressions.map((r) => (
+              <RegressionItem
+                key={`${r.site.id}-${r.metric}`}
+                regression={r}
+                siteLabel={
+                  <Link
+                    href={withStrategy(`/sites/${r.site.id}`, strategy)}
+                    className="text-indigo-600 hover:text-indigo-500"
+                  >
+                    {r.site.name}
+                  </Link>
+                }
+              />
+            ))}
           </div>
         )}
       </Card>

@@ -153,7 +153,7 @@ async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
           </div>
 
           <Card>
-            <CardHeader title="Snapshot history" description={`Most recent ${Math.min(history.length, 20)} of ${history.length} ${strategy} snapshots`} />
+            <CardHeader title="Snapshot history" description={`Most recent ${Math.min(history.length, 20)} ${strategy} snapshots`} />
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>

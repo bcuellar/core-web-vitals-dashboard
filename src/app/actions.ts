@@ -22,12 +22,15 @@ export async function addSite(_prev: ActionState, formData: FormData): Promise<A
   }
 
   const { url, name } = parsed.data;
-  const db = getDb();
-  if (db.select().from(schema.sites).where(eq(schema.sites.url, url)).get()) {
+  const { changes } = getDb()
+    .insert(schema.sites)
+    .values({ url, name: name || defaultSiteName(url) })
+    .onConflictDoNothing({ target: schema.sites.url })
+    .run();
+  if (changes === 0) {
     return { status: "error", message: `${url} is already being tracked` };
   }
 
-  db.insert(schema.sites).values({ url, name: name || defaultSiteName(url) }).run();
   revalidatePath("/", "layout");
   return { status: "success", message: `Added ${url}. Run a check to collect the first snapshot.` };
 }

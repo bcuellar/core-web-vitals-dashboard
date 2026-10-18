@@ -40,6 +40,13 @@ export function median(values: number[]): number {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
+/** Orders regressions by severity, then by largest relative change. */
+export function compareRegressions(a: Regression, b: Regression): number {
+  if (a.severity !== b.severity) return a.severity === "high" ? -1 : 1;
+  if (a.deltaPercent === b.deltaPercent) return 0;
+  return a.deltaPercent > b.deltaPercent ? -1 : 1;
+}
+
 /**
  * Compares the most recent snapshot against the median of the preceding
  * `baselineWindow` snapshots. A metric regresses when it worsened by both the
@@ -48,13 +55,6 @@ export function median(values: number[]): number {
  *
  * @param history snapshots for a single site + strategy, oldest first.
  */
-/** Orders regressions by severity, then by largest relative change. */
-export function compareRegressions(a: Regression, b: Regression): number {
-  if (a.severity !== b.severity) return a.severity === "high" ? -1 : 1;
-  if (a.deltaPercent === b.deltaPercent) return 0;
-  return a.deltaPercent > b.deltaPercent ? -1 : 1;
-}
-
 export function detectRegressions(
   history: Pick<Snapshot, MetricKey>[],
   { baselineWindow = DEFAULT_BASELINE_WINDOW, thresholdPercent = DEFAULT_THRESHOLD_PERCENT }: RegressionOptions = {},
