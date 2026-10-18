@@ -133,7 +133,7 @@ async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
 
           {regressions.length > 0 && (
             <Card>
-              <CardHeader title="Regressions" description={`Latest snapshot vs. median of the previous ${DEFAULT_BASELINE_WINDOW}.`} />
+              <CardHeader title="Regressions" description={`Latest snapshot vs. median of up to the previous ${DEFAULT_BASELINE_WINDOW}.`} />
               <div className="divide-y divide-slate-100 px-5">
                 {regressions.map((r) => (
                   <RegressionItem key={r.metric} regression={r} />

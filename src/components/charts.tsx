@@ -41,7 +41,9 @@ export function Sparkline({ points, metric }: { points: ChartPoint[]; metric: Me
 export function TrendChart({ points, series }: { points: ChartPoint[]; series: MetricKey[] }) {
   const primary = METRICS[series[0]];
   const values = points.flatMap((p) => series.map((s) => p[s])).filter((v): v is number => v != null);
-  const max = primary.higherIsBetter ? 100 : Math.max(primary.poor * 1.15, ...values) * 1.05;
+  // Cap the axis so a single extreme outlier doesn't flatten the chart.
+  const highest = values.reduce((acc, v) => Math.max(acc, v), 0);
+  const max = primary.higherIsBetter ? 100 : Math.min(Math.max(primary.poor * 1.15, highest), primary.poor * 3) * 1.05;
   const min = 0;
   const bands = primary.higherIsBetter
     ? [

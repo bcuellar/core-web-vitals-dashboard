@@ -83,7 +83,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/">, "searchParams">)
       <Card>
         <CardHeader
           title="Regressions"
-          description={`Latest snapshot compared with the median of the previous ${DEFAULT_BASELINE_WINDOW} for this strategy.`}
+          description={`Latest snapshot compared with the median of up to the previous ${DEFAULT_BASELINE_WINDOW} for this strategy.`}
         />
         {regressions.length === 0 ? (
           <EmptyState title="No regressions detected">
