@@ -4,11 +4,9 @@
  *
  *   npm run db:seed
  */
-import { loadEnvConfig } from "@next/env";
+import "./load-env";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-
-loadEnvConfig(process.cwd());
 
 const DAY = 24 * 60 * 60 * 1000;
 const DAYS = 30;

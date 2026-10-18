@@ -7,6 +7,7 @@ import { AssessmentBadge, Card, CardHeader, EmptyState, MetricValue, RegressionI
 import { formatRelative, hostname } from "@/lib/format";
 import { parseStrategy, withStrategy } from "@/lib/strategy";
 import type { Strategy } from "@/db/schema";
+import { compareRegressions, DEFAULT_BASELINE_WINDOW, DEFAULT_THRESHOLD_PERCENT } from "@/lib/regressions";
 import { getDashboard, type SiteOverview } from "@/server/queries";
 
 export default function DashboardPage({ searchParams }: PageProps<"/">) {
@@ -80,14 +81,16 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/">, "searchParams">)
       <Card>
         <CardHeader
           title="Regressions"
-          description="Latest snapshot compared with the median of the previous 7 for this strategy."
+          description={`Latest snapshot compared with the median of the previous ${DEFAULT_BASELINE_WINDOW} for this strategy.`}
         />
         {regressions.length === 0 ? (
-          <EmptyState title="No regressions detected">Metrics are within 10% of their recent baseline.</EmptyState>
+          <EmptyState title="No regressions detected">
+            Metrics are within {DEFAULT_THRESHOLD_PERCENT}% of their recent baseline.
+          </EmptyState>
         ) : (
           <div className="divide-y divide-slate-100 px-5">
             {regressions
-              .sort((a, b) => (a.severity === b.severity ? b.deltaPercent - a.deltaPercent : a.severity === "high" ? -1 : 1))
+              .sort(compareRegressions)
               .map((r) => (
                 <RegressionItem
                   key={`${r.site.id}-${r.metric}`}

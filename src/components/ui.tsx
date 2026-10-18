@@ -61,7 +61,9 @@ export function AssessmentBadge({ assessment }: { assessment: CwvAssessment }) {
 
 export function RegressionItem({ regression, siteLabel }: { regression: Regression; siteLabel?: ReactNode }) {
   const def = METRICS[regression.metric];
-  const pct = Number.isFinite(regression.deltaPercent) ? `${Math.round(regression.deltaPercent)}%` : "new";
+  const change = Number.isFinite(regression.deltaPercent)
+    ? `${def.higherIsBetter ? "−" : "+"}${Math.round(regression.deltaPercent)}%`
+    : "Up from 0";
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 py-3">
       <div className="min-w-0">
@@ -75,8 +77,7 @@ export function RegressionItem({ regression, siteLabel }: { regression: Regressi
         </p>
       </div>
       <Pill className={regression.severity === "high" ? RATING_STYLES.poor.pill : RATING_STYLES["needs-improvement"].pill}>
-        {def.higherIsBetter ? "−" : "+"}
-        {pct} · {regression.severity === "high" ? "High" : "Medium"}
+        {change} · {regression.severity === "high" ? "High" : "Medium"}
       </Pill>
     </div>
   );

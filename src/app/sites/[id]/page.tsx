@@ -8,6 +8,7 @@ import { StrategyToggle } from "@/components/strategy-toggle";
 import { AssessmentBadge, Card, CardHeader, EmptyState, MetricValue, RegressionItem, Skeleton } from "@/components/ui";
 import type { Snapshot } from "@/db/schema";
 import { formatDateTime, formatRelative } from "@/lib/format";
+import { DEFAULT_BASELINE_WINDOW } from "@/lib/regressions";
 import { parseStrategy } from "@/lib/strategy";
 import { METRICS, type MetricKey } from "@/lib/vitals";
 import { getSiteOverview } from "@/server/queries";
@@ -120,6 +121,7 @@ async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
                   <div key={key}>
                     <dt className="text-xs text-slate-500">{label}</dt>
                     <dd className="mt-1 text-lg">
+                      {/* Lighthouse rates every category with the same 90 / 50 score thresholds. */}
                       <MetricValue metric="performanceScore" value={latest[key]} />
                     </dd>
                   </div>
@@ -130,7 +132,7 @@ async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
 
           {regressions.length > 0 && (
             <Card>
-              <CardHeader title="Regressions" description="Latest snapshot vs. median of the previous 7." />
+              <CardHeader title="Regressions" description={`Latest snapshot vs. median of the previous ${DEFAULT_BASELINE_WINDOW}.`} />
               <div className="divide-y divide-slate-100 px-5">
                 {regressions.map((r) => (
                   <RegressionItem key={r.metric} regression={r} />

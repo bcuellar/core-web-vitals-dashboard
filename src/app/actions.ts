@@ -44,7 +44,9 @@ export async function collectSite(siteId: number, _prev: ActionState): Promise<A
 
   if (results.length === 0) return { status: "error", message: "Site not found" };
   const failed = results.filter((r) => !r.ok);
-  if (failed.length === 0) return { status: "success", message: "Snapshots collected for mobile and desktop." };
+  if (failed.length === 0) {
+    return { status: "success", message: `Snapshots collected (${results.map((r) => r.strategy).join(", ")}).` };
+  }
   return {
     status: "error",
     message: failed.map((r) => `${r.strategy}: ${r.error}`).join(" · "),

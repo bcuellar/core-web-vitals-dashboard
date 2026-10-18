@@ -11,6 +11,9 @@ export const REGRESSION_METRICS = [
   "labCls",
 ] as const satisfies readonly MetricKey[];
 
+export const DEFAULT_BASELINE_WINDOW = 7;
+export const DEFAULT_THRESHOLD_PERCENT = 10;
+
 export interface Regression {
   metric: MetricKey;
   baseline: number;
@@ -45,9 +48,16 @@ export function median(values: number[]): number {
  *
  * @param history snapshots for a single site + strategy, oldest first.
  */
+/** Orders regressions by severity, then by largest relative change. */
+export function compareRegressions(a: Regression, b: Regression): number {
+  if (a.severity !== b.severity) return a.severity === "high" ? -1 : 1;
+  if (a.deltaPercent === b.deltaPercent) return 0;
+  return a.deltaPercent > b.deltaPercent ? -1 : 1;
+}
+
 export function detectRegressions(
   history: Pick<Snapshot, MetricKey>[],
-  { baselineWindow = 7, thresholdPercent = 10 }: RegressionOptions = {},
+  { baselineWindow = DEFAULT_BASELINE_WINDOW, thresholdPercent = DEFAULT_THRESHOLD_PERCENT }: RegressionOptions = {},
 ): Regression[] {
   if (history.length < 2) return [];
   const latest = history[history.length - 1];

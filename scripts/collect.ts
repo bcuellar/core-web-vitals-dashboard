@@ -5,12 +5,10 @@
  *   npm run collect -- --site 3      # a single site
  *   npm run collect -- --strategy mobile
  */
-import { loadEnvConfig } from "@next/env";
+import "./load-env";
 import { parseArgs } from "node:util";
 import { STRATEGIES, type Strategy } from "@/db/schema";
 import { collectSnapshots } from "@/server/collect";
-
-loadEnvConfig(process.cwd());
 
 async function main() {
   const { values } = parseArgs({

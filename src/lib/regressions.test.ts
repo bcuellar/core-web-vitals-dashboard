@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Snapshot } from "@/db/schema";
-import { detectRegressions, median } from "./regressions";
+import { compareRegressions, detectRegressions, median, type Regression } from "./regressions";
 
 type Metrics = Partial<Pick<Snapshot, "performanceScore" | "fieldLcp" | "fieldInp" | "fieldCls" | "labLcp" | "labTbt" | "labCls">>;
 
@@ -81,5 +81,23 @@ describe("detectRegressions", () => {
   it("skips metrics missing from the latest snapshot or the baseline", () => {
     const history = [snap({ fieldInp: 100 }), snap({ fieldInp: null, labTbt: 900 })];
     expect(detectRegressions(history)).toEqual([]);
+  });
+});
+
+describe("compareRegressions", () => {
+  const r = (severity: Regression["severity"], deltaPercent: number) => ({ severity, deltaPercent }) as Regression;
+
+  it("sorts high severity first, then by relative change", () => {
+    const sorted = [r("medium", 50), r("high", 20), r("high", 80), r("medium", Infinity)].sort(compareRegressions);
+    expect(sorted.map((x) => [x.severity, x.deltaPercent])).toEqual([
+      ["high", 80],
+      ["high", 20],
+      ["medium", Infinity],
+      ["medium", 50],
+    ]);
+  });
+
+  it("is consistent for equal infinite changes", () => {
+    expect(compareRegressions(r("high", Infinity), r("high", Infinity))).toBe(0);
   });
 });
