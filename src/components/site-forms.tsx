@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { addSite, collectSite, deleteSite, type ActionState } from "@/app/actions";
+import { addSite, collectAllSites, collectSite, deleteSite, type ActionState } from "@/app/actions";
 import { cn } from "./ui";
 
 const initialState: ActionState = { status: "idle" };
@@ -10,6 +10,7 @@ const initialState: ActionState = { status: "idle" };
 const buttonBase =
   "inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
 const primaryButton = cn(buttonBase, "bg-slate-900 text-white hover:bg-slate-700");
+const secondaryButton = cn(buttonBase, "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50");
 const dangerButton = cn(buttonBase, "border border-rose-200 bg-white text-rose-700 hover:bg-rose-50");
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none";
@@ -25,17 +26,23 @@ function SubmitButton({ children, pendingLabel, className }: { children: string;
 }
 
 function FormMessage({ state }: { state: ActionState }) {
-  if (state.status === "idle" || !state.message) return null;
-  return (
-    <p role="status" className={cn("text-sm", state.status === "error" ? "text-rose-600" : "text-emerald-700")}>
-      {state.message}
-    </p>
-  );
+  if (state.status === "idle" || !state.message || state.status === "error") return null;
+  return <p role="status" className="text-sm text-emerald-700">{state.message}</p>;
+}
+
+function useActionErrorPopup(state: ActionState) {
+  useEffect(() => {
+    if (state.status === "error" && state.message) {
+      window.alert(`App has encountered an error.\n\n${state.message}`);
+    }
+  }, [state]);
 }
 
 export function AddSiteForm() {
   const [state, action] = useActionState(addSite, initialState);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useActionErrorPopup(state);
 
   useEffect(() => {
     if (state.status === "success") formRef.current?.reset();
@@ -61,12 +68,39 @@ export function AddSiteForm() {
   );
 }
 
-export function CollectButton({ siteId }: { siteId: number }) {
-  const [state, action] = useActionState(collectSite.bind(null, siteId), initialState);
+export function CollectAllButton() {
+  const [state, action] = useActionState(collectAllSites, initialState);
+  useActionErrorPopup(state);
+
   return (
     <form action={action} className="flex flex-col items-end gap-1">
-      <SubmitButton pendingLabel="Running PageSpeed…" className={primaryButton}>
-        Run check now
+      <SubmitButton pendingLabel="Collecting all…" className={secondaryButton}>
+        Collect all
+      </SubmitButton>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
+export function CollectButton({
+  siteId,
+  label = "Run check now",
+  compact = false,
+}: {
+  siteId: number;
+  label?: string;
+  compact?: boolean;
+}) {
+  const [state, action] = useActionState(collectSite.bind(null, siteId), initialState);
+  useActionErrorPopup(state);
+
+  return (
+    <form action={action} className="flex flex-col items-end gap-1">
+      <SubmitButton
+        pendingLabel={compact ? "Collecting…" : "Running PageSpeed…"}
+        className={compact ? cn(primaryButton, "px-2.5 py-1.5 text-xs") : primaryButton}
+      >
+        {label}
       </SubmitButton>
       <FormMessage state={state} />
     </form>

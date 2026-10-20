@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Sparkline, type ChartPoint } from "@/components/charts";
-import { AddSiteForm } from "@/components/site-forms";
+import { AddSiteForm, CollectAllButton, CollectButton } from "@/components/site-forms";
 import { StrategyToggle } from "@/components/strategy-toggle";
-import { AssessmentBadge, Card, CardHeader, EmptyState, MetricValue, RegressionItem, Skeleton } from "@/components/ui";
+import { AssessmentBadge, Card, CardHeader, EmptyState, MetricValue, Skeleton } from "@/components/ui";
 import { formatRelative, hostname } from "@/lib/format";
 import { parseStrategy, withStrategy } from "@/lib/strategy";
 import type { Strategy } from "@/db/schema";
-import { compareRegressions, DEFAULT_BASELINE_WINDOW, DEFAULT_THRESHOLD_PERCENT } from "@/lib/regressions";
+import { compareRegressions } from "@/lib/regressions";
+import { siteSlug } from "@/lib/sites";
 import { getDashboard, type SiteOverview } from "@/server/queries";
 
 export default function DashboardPage({ searchParams }: PageProps<"/">) {
@@ -68,8 +68,16 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/">, "searchParams">)
         <CardHeader
           title="Sites"
           description="Field metrics are 75th percentile from the Chrome UX Report."
-          action={<StrategyToggle current={strategy} basePath="/" />}
+          action={
+            <div className="flex items-center gap-2">
+              <CollectAllButton />
+              <StrategyToggle current={strategy} basePath="/" />
+            </div>
+          }
         />
+        <div className="border-b border-slate-100 px-5 py-3 text-xs text-slate-500">
+          Click any site to open its detailed metrics, trends, and snapshot history.
+        </div>
         {overviews.length === 0 ? (
           <EmptyState title="No sites tracked yet">
             Add a site below, or run <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">npm run db:seed</code> to
@@ -80,34 +88,6 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/">, "searchParams">)
         )}
       </Card>
 
-      <Card>
-        <CardHeader
-          title="Regressions"
-          description={`Latest snapshot compared with the median of up to the previous ${DEFAULT_BASELINE_WINDOW} for this strategy.`}
-        />
-        {regressions.length === 0 ? (
-          <EmptyState title="No regressions detected">
-            Metrics are within {DEFAULT_THRESHOLD_PERCENT}% of their recent baseline.
-          </EmptyState>
-        ) : (
-          <div className="divide-y divide-slate-100 px-5">
-            {regressions.map((r) => (
-              <RegressionItem
-                key={`${r.site.id}-${r.metric}`}
-                regression={r}
-                siteLabel={
-                  <Link
-                    href={withStrategy(`/sites/${r.site.id}`, strategy)}
-                    className="text-indigo-600 hover:text-indigo-500"
-                  >
-                    {r.site.name}
-                  </Link>
-                }
-              />
-            ))}
-          </div>
-        )}
-      </Card>
     </>
   );
 }
@@ -124,14 +104,13 @@ function SitesTable({ overviews, strategy, now }: { overviews: SiteOverview[]; s
             <th className="px-3 py-3">INP</th>
             <th className="px-3 py-3">CLS</th>
             <th className="px-3 py-3">Perf</th>
-            <th className="px-3 py-3">Perf trend</th>
+            <th className="px-3 py-3">Trend</th>
             <th className="px-5 py-3 text-right">Updated</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {overviews.map(({ site, latest, history, assessment, regressions }) => {
-            const points: ChartPoint[] = history.map((s) => ({ t: s.fetchedAt.getTime(), performanceScore: s.performanceScore }));
-            const href = withStrategy(`/sites/${site.id}`, strategy);
+          {overviews.map(({ site, latest, assessment, regressions }) => {
+            const href = withStrategy(`/site/${siteSlug(site.url)}`, strategy);
             return (
               <tr key={site.id} className="hover:bg-slate-50/60">
                 <td className="px-5 py-3">
@@ -154,9 +133,12 @@ function SitesTable({ overviews, strategy, now }: { overviews: SiteOverview[]; s
                 <td className="px-3 py-3"><MetricValue metric="fieldInp" value={latest?.fieldInp} /></td>
                 <td className="px-3 py-3"><MetricValue metric="fieldCls" value={latest?.fieldCls} /></td>
                 <td className="px-3 py-3"><MetricValue metric="performanceScore" value={latest?.performanceScore} /></td>
-                <td className="px-3 py-3"><Sparkline points={points} metric="performanceScore" /></td>
-                <td className="px-5 py-3 text-right text-xs whitespace-nowrap text-slate-500">
-                  {latest ? formatRelative(latest.fetchedAt, now) : "Never"}
+                <td className="px-3 py-3 text-slate-400">—</td>
+                <td className="px-5 py-3 text-right">
+                  <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                    <span className="text-xs text-slate-500">{latest ? formatRelative(latest.fetchedAt, now) : "Never"}</span>
+                    <CollectButton siteId={site.id} label="Refresh" compact />
+                  </div>
                 </td>
               </tr>
             );

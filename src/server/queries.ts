@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { getDb, schema } from "@/db";
 import type { Site, Snapshot, Strategy } from "@/db/schema";
 import { detectRegressions, type Regression } from "@/lib/regressions";
+import { siteSlug } from "@/lib/sites";
 import { assessCoreWebVitals, type CwvAssessment } from "@/lib/vitals";
 
 const HISTORY_LIMIT = 60;
@@ -48,5 +49,12 @@ export async function getDashboard(strategy: Strategy): Promise<SiteOverview[]> 
 export async function getSiteOverview(siteId: number, strategy: Strategy): Promise<SiteOverview | null> {
   await connection();
   const site = getDb().select().from(schema.sites).where(eq(schema.sites.id, siteId)).get();
+  return site ? buildOverview(site, strategy) : null;
+}
+
+export async function getSiteOverviewBySlug(slug: string, strategy: Strategy): Promise<SiteOverview | null> {
+  await connection();
+  const normalized = slug.trim().toLowerCase();
+  const site = getDb().select().from(schema.sites).all().find((candidate) => siteSlug(candidate.url) === normalized);
   return site ? buildOverview(site, strategy) : null;
 }

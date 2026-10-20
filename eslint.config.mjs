@@ -7,7 +7,19 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          args: "all",
+          argsIgnorePattern: "^_",
+          caughtErrors: "all",
+          destructuredArrayIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+          vars: "all",
+          varsIgnorePattern: "^_",
+        },
+      ],
+      "no-unused-vars": "off",
     },
   },
   // Override default ignores of eslint-config-next.

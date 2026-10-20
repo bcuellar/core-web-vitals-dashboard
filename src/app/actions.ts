@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db";
+import { summarizeCollectResults } from "@/lib/collect-summary";
 import { defaultSiteName, siteInputSchema } from "@/lib/sites";
 import { collectSnapshots } from "@/server/collect";
 
@@ -41,17 +42,18 @@ export async function deleteSite(siteId: number): Promise<void> {
   redirect("/");
 }
 
+export async function collectAllSites(_prev: ActionState): Promise<ActionState> {
+  const results = await collectSnapshots();
+  revalidatePath("/", "layout");
+
+  const summary = summarizeCollectResults(results, { mode: "batch" });
+  return summary.ok ? { status: "success", message: summary.message } : { status: "error", message: summary.message };
+}
+
 export async function collectSite(siteId: number, _prev: ActionState): Promise<ActionState> {
   const results = await collectSnapshots({ siteId });
   revalidatePath("/", "layout");
 
-  if (results.length === 0) return { status: "error", message: "Site not found" };
-  const failed = results.filter((r) => !r.ok);
-  if (failed.length === 0) {
-    return { status: "success", message: `Snapshots collected (${results.map((r) => r.strategy).join(", ")}).` };
-  }
-  return {
-    status: "error",
-    message: failed.map((r) => `${r.strategy}: ${r.error}`).join(" · "),
-  };
+  const summary = summarizeCollectResults(results, { mode: "site" });
+  return summary.ok ? { status: "success", message: summary.message } : { status: "error", message: summary.message };
 }
