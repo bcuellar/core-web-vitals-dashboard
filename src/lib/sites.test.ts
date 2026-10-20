@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultSiteName, parseSiteId, siteInputSchema } from "./sites";
+import { defaultSiteName, parseSiteId, siteInputSchema, siteSlug } from "./sites";
 
 describe("siteInputSchema", () => {
   it("normalises URLs and adds https:// when missing", () => {
@@ -19,6 +19,15 @@ describe("defaultSiteName", () => {
   it("derives a readable name from the URL", () => {
     expect(defaultSiteName("https://www.example.com/")).toBe("example.com");
     expect(defaultSiteName("https://example.com/blog/")).toBe("example.com/blog");
+  });
+});
+
+describe("siteSlug", () => {
+  it("produces readable host-based slugs for dashboard routes", () => {
+    expect(siteSlug("https://www.wallstreetjournal.com/")).toBe("wallstreetjournal");
+    expect(siteSlug("https://docs.google.com/")).toBe("docs-google");
+    expect(siteSlug("https://shop.example.com/")).toBe("shop-example");
+    expect(siteSlug("https://example.com/blog/")).toBe("example");
   });
 });
 

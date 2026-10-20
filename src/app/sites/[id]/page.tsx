@@ -2,29 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { TrendChart, type ChartPoint } from "@/components/charts";
 import { CollectButton, DeleteSiteButton } from "@/components/site-forms";
 import { StrategyToggle } from "@/components/strategy-toggle";
 import { AssessmentBadge, Card, CardHeader, EmptyState, MetricValue, RegressionItem, Skeleton } from "@/components/ui";
-import type { Snapshot } from "@/db/schema";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { DEFAULT_BASELINE_WINDOW } from "@/lib/regressions";
-import { parseSiteId } from "@/lib/sites";
+import { parseSiteId, siteSlug } from "@/lib/sites";
 import { parseStrategy } from "@/lib/strategy";
 import { METRICS, type MetricKey } from "@/lib/vitals";
 import { getSiteOverview } from "@/server/queries";
 
 export const metadata: Metadata = { title: "Site" };
-
-const FIELD_VS_LAB = "Field p75 (solid) vs. lab (dashed)";
-const CHARTS: { title: string; description: string; series: MetricKey[] }[] = [
-  { title: "Performance score", description: "Lighthouse", series: ["performanceScore"] },
-  { title: "Largest Contentful Paint", description: FIELD_VS_LAB, series: ["fieldLcp", "labLcp"] },
-  { title: "Interaction to Next Paint", description: "Field p75", series: ["fieldInp"] },
-  { title: "Cumulative Layout Shift", description: FIELD_VS_LAB, series: ["fieldCls", "labCls"] },
-  { title: "Total Blocking Time", description: "Lab", series: ["labTbt"] },
-  { title: "Time to First Byte", description: FIELD_VS_LAB, series: ["fieldTtfb", "labTtfb"] },
-];
 
 const HISTORY_COLUMNS: MetricKey[] = ["performanceScore", "fieldLcp", "fieldInp", "fieldCls", "labLcp", "labTbt", "labCls"];
 
@@ -57,7 +45,6 @@ async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
   if (!overview) notFound();
 
   const { site, latest, history, assessment, regressions } = overview;
-  const points: ChartPoint[] = history.map((s) => ({ ...pick(s), t: s.fetchedAt.getTime() }));
 
   return (
     <>
@@ -74,7 +61,7 @@ async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
           </a>
         </div>
         <div className="flex flex-wrap items-start gap-2">
-          <StrategyToggle current={strategy} basePath={`/sites/${site.id}`} />
+          <StrategyToggle current={strategy} basePath={`/site/${siteSlug(site.url)}`} />
           <CollectButton siteId={site.id} />
           <DeleteSiteButton siteId={site.id} siteName={site.name} />
         </div>
@@ -142,17 +129,6 @@ async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
             </Card>
           )}
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {CHARTS.map(({ title, description, series }) => (
-              <Card key={title}>
-                <CardHeader title={title} description={description} />
-                <div className="px-2 py-4">
-                  <TrendChart points={points} series={series} />
-                </div>
-              </Card>
-            ))}
-          </div>
-
           <Card>
             <CardHeader title="Snapshot history" description={`Most recent ${Math.min(history.length, 20)} ${strategy} snapshots`} />
             <div className="overflow-x-auto">
@@ -189,12 +165,6 @@ async function SiteDetail({ params, searchParams }: PageProps<"/sites/[id]">) {
       )}
     </>
   );
-}
-
-function pick(s: Snapshot): Omit<ChartPoint, "t"> {
-  const out: Omit<ChartPoint, "t"> = {};
-  for (const key of Object.keys(METRICS) as MetricKey[]) out[key] = s[key];
-  return out;
 }
 
 function SiteSkeleton() {

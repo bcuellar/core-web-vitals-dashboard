@@ -23,6 +23,19 @@ export function parseSiteId(value: string | null | undefined): number | null {
   return id > 0 ? id : null;
 }
 
+export function siteSlug(url: string): string {
+  const { hostname } = new URL(url);
+  const host = hostname.replace(/^www\./i, "").replace(/\.$/, "");
+  const parts = host.split(".").filter(Boolean);
+  if (parts.length === 0) return "site";
+
+  const meaningful = parts.length <= 1 ? parts : parts.slice(0, -1);
+  return meaningful
+    .map((part) => part.replace(/[^a-z0-9-]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase())
+    .filter(Boolean)
+    .join("-") || "site";
+}
+
 export function defaultSiteName(url: string): string {
   const { hostname, pathname } = new URL(url);
   const host = hostname.replace(/^www\./, "");
